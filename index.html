@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Report - DSE MC Sagaranten</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .report-container {
+            max-width: 500px;
+            background: #fff;
+            margin: auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; color: #d32f2f; margin-bottom: 5px; }
+        .header-info { text-align: center; font-weight: bold; margin-bottom: 20px; color: #555; }
+        .section-title {
+            background: #d32f2f; color: white; padding: 6px 12px; margin-top: 25px;
+            font-size: 14px; font-weight: bold; border-radius: 4px; text-transform: uppercase;
+        }
+        .field-group {
+            margin: 8px 0; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #eee; padding-bottom: 5px;
+        }
+        .label { font-weight: 600; color: #333; font-size: 13px; }
+        .value { display: flex; align-items: center; }
+        .value input {
+            border: none; text-align: right; background: #f9f9f9; font-family: inherit;
+            font-size: 14px; width: 140px; padding: 4px 8px; border-radius: 4px;
+        }
+        .value input:focus { outline: 2px solid #ffcdd2; background: #fff; }
+        .total-highlight { background: #fff9c4 !important; font-weight: bold; color: #d32f2f; }
+        .note { font-size: 11px; font-style: italic; color: #666; margin-top: 15px; padding: 8px; background: #fef9e7; border-radius: 4px; }
+        .btn-container { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-excel { background: #1D6F42; color: white; }
+        .btn-print { background: #1976d2; color: white; }
+        .btn-reset { background: #757575; color: white; }
+        .btn:hover { opacity: 0.9; }
+        
+        @media print { .btn-container { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="report-container">
+    <h2>Daily Report - DSE MC</h2>
+    <div class="header-info">Sagaranten</div>
+    
+    <div class="field-group">
+        <span class="label">Tgl:</span>
+        <span class="value" id="currentDate" style="font-weight: bold;"></span>
+    </div>
+
+    <div class="field-group"><span class="label">ID DSE:</span><span class="value"><input type="text" id="id_dse" placeholder="..."></span></div>
+    <div class="field-group"><span class="label">PJP Today:</span><span class="value"><input type="text" id="pjp" placeholder="..."></span></div>
+    <div class="field-group"><span class="label">EC:</span><span class="value"><input type="number" id="ec" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">Adhoc:</span><span class="value"><input type="number" id="adhoc" placeholder="0"></span></div>
+
+    <div class="section-title">SALES SUMMARY</div>
+    <div class="field-group">
+        <span class="label">Total Sellin Salmo:</span>
+        <span class="value">Rp. <input type="text" id="sellin" placeholder="0" oninput="formatRupiah(this)"></span>
+    </div>
+    <div class="field-group">
+        <span class="label">Total SP (Auto):</span>
+        <span class="value"><input type="number" id="total_sp" class="total-highlight" readonly value="0"></span>
+    </div>
+    <div class="field-group"><span class="label">SP 3GB:</span><span class="value"><input type="number" class="sp-input" id="sp_3gb" oninput="calcSP()" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">SP Zero:</span><span class="value"><input type="number" class="sp-input" id="sp_zero" oninput="calcSP()" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">Total Tagging SP:</span><span class="value"><input type="number" id="tag_sp" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">Outlet Tagging SP:</span><span class="value"><input type="number" id="tag_outlet" placeholder="0"></span></div>
+
+    <div class="section-title">VOUCHER DETAILS</div>
+    <div class="field-group">
+        <span class="label">Total Voucher (Auto):</span>
+        <span class="value"><input type="number" id="total_voucher" class="total-highlight" readonly value="0"></span>
+    </div>
+    <div class="field-group"><span class="label">1,5GB/1 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_15_1h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">3GB/1 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_3_1h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">3GB/3 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_3_3h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">3GB/30 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_3_30h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">5GB/2 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_5_2h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">5GB/3 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_5_3h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">2,5GB/5 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_25_5h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">3,5GB/5 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_35_5h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">5GB/5 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_5_5h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">7GB/7 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_7_7h" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">6GB/30 Hari:</span><span class="value"><input type="number" class="v-input" oninput="calcVoucher()" id="v_6_30h" placeholder="0"></span></div>
+
+    <div class="section-title">OTHERS</div>
+    <div class="field-group"><span class="label">Inject Rabu Mantap:</span><span class="value"><input type="number" id="rabu_mantap" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">FWA/Hifi Air:</span><span class="value"><input type="number" id="fwa_hifi" placeholder="0"></span></div>
+
+    <div class="section-title">ONO WARUNG / NON TELCO</div>
+    <div class="field-group"><span class="label">Target ONO:</span><span class="value"><input type="number" id="target_ono" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">Actual ONO:</span><span class="value"><input type="number" id="actual_ono" placeholder="0"></span></div>
+
+    <div class="section-title">BRANDING</div>
+    <div class="field-group"><span class="label">Total Shopblind:</span><span class="value"><input type="number" id="b_shopblind" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">Total Poster:</span><span class="value"><input type="number" id="b_poster" placeholder="0"></span></div>
+    <div class="field-group"><span class="label">Biometric:</span><span class="value"><input type="number" id="b_biometric" placeholder="0"></span></div>
+
+    <p class="note">Note: Input branding berdasarkan outlet yg sudah di submit ke MKID</p>
+
+    <div class="btn-container">
+        <button class="btn btn-excel" onclick="exportToExcel()">💾 Simpan ke Excel</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ Cetak / PDF</button>
+        <button class="btn btn-reset" onclick="window.location.reload()">🔄 Reset Form</button>
+    </div>
+</div>
+
+<script>
+    // 1. Update Tanggal Otomatis
+    const today = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = today.toLocaleDateString("id-ID", options);
+    document.getElementById("currentDate").innerText = dateString;
+
+    // 2. Format Rupiah
+    function formatRupiah(el) {
+        let val = el.value.replace(/[^,\d]/g, '');
+        if (val) {
+            let split = val.split(','), sisa = split[0].length % 3, rupiah = split[0].substr(0, sisa), ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+            if (ribuan) { let separator = sisa ? '.' : ''; rupiah += separator + ribuan.join('.'); }
+            el.value = rupiah;
+        }
+    }
+
+    // 3. Hitung SP (3GB + Zero)
+    function calcSP() {
+        let g3 = parseInt(document.getElementById('sp_3gb').value) || 0;
+        let zero = parseInt(document.getElementById('sp_zero').value) || 0;
+        document.getElementById('total_sp').value = g3 + zero;
+    }
+
+    // 4. Hitung Total Voucher
+    function calcVoucher() {
+        let inputs = document.getElementsByClassName('v-input'), total = 0;
+        for (let i = 0; i < inputs.length; i++) { total += (parseInt(inputs[i].value) || 0); }
+        document.getElementById('total_voucher').value = total;
+    }
+
+    // 5. Fungsi Simpan ke Excel
+    function exportToExcel() {
+        const data = [
+            ["KATEGORI", "ITEM", "VALUE"],
+            ["INFO", "Tanggal", dateString],
+            ["INFO", "ID DSE", document.getElementById('id_dse').value],
+            ["INFO", "PJP Today", document.getElementById('pjp').value],
+            ["INFO", "EC", document.getElementById('ec').value],
+            ["INFO", "Adhoc", document.getElementById('adhoc').value],
+            ["SALES", "Total Sellin Salmo", "Rp " + document.getElementById('sellin').value],
+            ["SALES", "Total SP", document.getElementById('total_sp').value],
+            ["SALES", "SP 3GB", document.getElementById('sp_3gb').value],
+            ["SALES", "SP Zero", document.getElementById('sp_zero').value],
+            ["SALES", "Total Tagging SP", document.getElementById('tag_sp').value],
+            ["SALES", "Outlet Tagging SP", document.getElementById('tag_outlet').value],
+            ["VOUCHER", "TOTAL VOUCHER", document.getElementById('total_voucher').value],
+            ["VOUCHER", "1,5GB/1 Hari", document.getElementById('v_15_1h').value],
+            ["VOUCHER", "3GB/1 Hari", document.getElementById('v_3_1h').value],
+            ["VOUCHER", "3GB/3 Hari", document.getElementById('v_3_3h').value],
+            ["VOUCHER", "3GB/30 Hari", document.getElementById('v_3_30h').value],
+            ["VOUCHER", "5GB/2 Hari", document.getElementById('v_5_2h').value],
+            ["VOUCHER", "5GB/3 Hari", document.getElementById('v_5_3h').value],
+            ["VOUCHER", "2,5GB/5 Hari", document.getElementById('v_25_5h').value],
+            ["VOUCHER", "3,5GB/5 Hari", document.getElementById('v_35_5h').value],
+            ["VOUCHER", "5GB/5 Hari", document.getElementById('v_5_5h').value],
+            ["VOUCHER", "7GB/7 Hari", document.getElementById('v_7_7h').value],
+            ["VOUCHER", "6GB/30 Hari", document.getElementById('v_6_30h').value],
+            ["OTHERS", "Inject Rabu Mantap", document.getElementById('rabu_mantap').value],
+            ["OTHERS", "FWA/Hifi Air", document.getElementById('fwa_hifi').value],
+            ["ONO", "Target ONO", document.getElementById('target_ono').value],
+            ["ONO", "Actual ONO", document.getElementById('actual_ono').value],
+            ["BRANDING", "Total Shopblind", document.getElementById('b_shopblind').value],
+            ["BRANDING", "Total Poster", document.getElementById('b_poster').value],
+            ["BRANDING", "Biometric", document.getElementById('b_biometric').value]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Daily Report Sagaranten");
+
+        const fileName = `Daily_Report_Sagaranten_${today.getDate()}-${today.getMonth()+1}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    }
+</script>
+
+</body>
+</html>
+
